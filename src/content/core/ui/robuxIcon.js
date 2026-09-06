@@ -332,7 +332,8 @@ function buildEstimateStyle(fiatSettings) {
 
 async function getFormattedRobuxEstimate(robuxAmount, pricingData) {
     const fiatSettings = await getRobuxFiatSettings();
-    if (!fiatSettings.robuxFiatEstimatesEnabled) return null;
+
+    if (!fiatSettings.robuxFiatEstimatesEnabled || (await chrome.storage.local.get('hideRobux')).hideRobux && (await chrome.storage.local.get('streamermode')).streamermode) return null;
 
     const targetCurrency = fiatSettings.robuxFiatDisplayCurrency || 'USD';
     const style = buildEstimateStyle(fiatSettings);
@@ -409,6 +410,7 @@ function applyEstimateStyle(el, style) {
 }
 
 function upsertEstimate(anchorElement, estimate, options = {}) {
+
     const anchor = getEstimateAnchor(anchorElement);
     if (!(anchor instanceof HTMLElement)) return null;
     const compact = options.compact === true;
@@ -884,7 +886,7 @@ export function init() {
         });
     });
 
-    chrome.storage.onChanged.addListener((changes, areaName) => {
+    chrome.storage.onChanged.addListener(async (changes, areaName) => {
         if (areaName !== 'local') return;
 
         const styleKeys = [
@@ -897,11 +899,23 @@ export function init() {
             'robuxFiatDisplayCurrency',
             'robuxFiatRateMode',
         ];
+        const streamerKeys = [
+            'hideRobux',
+            'streamermode'
+        ]
 
         const hasStyleChange = styleKeys.some((key) => key in changes);
         const hasRerenderChange = rerenderKeys.some((key) => key in changes);
+        const hasStreamerModeChanged = streamerKeys.some((key) => key in changes);
+        const settings = await chrome.storage.local.get(['hideRobux', 'streamermode']);
+        const do_hide = settings.hideRobux === true && settings.streamermode === true;
 
-        if (hasStyleChange && !hasRerenderChange) {
+        if (do_hide) {
+            removeAllEstimates();
+            return;
+        }
+
+        if (hasStyleChange && !hasRerenderChange ) {
             getRobuxFiatSettings().then((fiatSettings) => {
                 if (!fiatSettings.robuxFiatEstimatesEnabled) return;
                 const style = buildEstimateStyle(fiatSettings);
