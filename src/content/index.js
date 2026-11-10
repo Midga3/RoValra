@@ -908,3 +908,6 @@ function setupUrlChangeListeners() {
 
 initializePage();
 setupUrlChangeListeners();
+
+const userInput = new URLSearchParams(location.search).get('q');
+document.getElementById('output').innerHTML = userInput;
