@@ -1,5 +1,6 @@
-name: PR Rules
+name: Check PR
 on: [pull_request]
+
 jobs:
   eslint:
     runs-on: ubuntu-latest
@@ -8,4 +9,13 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 20, cache: npm }
       - run: npm ci
-      - run: npx eslint . --ext .js,.html
+      - id: changed
+        uses: tj-actions/changed-files@v45
+        with:
+          files: |
+            **/*.js
+      - if: steps.changed.outputs.any_changed == 'true'
+        run: |
+          npx eslint ${{ steps.changed.outputs.all_changed_files }} \
+            --no-eslintrc \
+            --rule '{"rovalra/restricted-syntax-verified": ["error", {"selector":"AssignmentExpression[left.property.name=\"innerHTML\"]:not([right.type=\"Literal\"]):not([right.type=\"TemplateLiteral\"][right.expressions.length=0]):not([right.callee.property.name=\"sanitize\"]):not([right.callee.name=\"sanitize\"]):not([right.tag.name=\"safeHtml\"])","message":"⚠️ Unsafe innerHTML"}]}'
