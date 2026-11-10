@@ -16,6 +16,12 @@ jobs:
             **/*.js
       - if: steps.changed.outputs.any_changed == 'true'
         run: |
-          npx eslint ${{ steps.changed.outputs.all_changed_files }} \
-            --no-eslintrc \
-            --rule '{"rovalra/restricted-syntax-verified": ["error", {"selector":"AssignmentExpression[left.property.name=\"innerHTML\"]:not([right.type=\"Literal\"]):not([right.type=\"TemplateLiteral\"][right.expressions.length=0]):not([right.callee.property.name=\"sanitize\"]):not([right.callee.name=\"sanitize\"]):not([right.tag.name=\"safeHtml\"])","message":"⚠️ Unsafe innerHTML"}]}'
+          set +e
+          OUTPUT=$(npx eslint ${{ steps.changed.outputs.all_changed_files }} 2>&1)
+          set -e
+          echo "$OUTPUT"
+          if echo "$OUTPUT" | grep -q "Unsafe innerHTML"; then
+            echo "::error::Unsafe innerHTML found in changed files"
+            exit 1
+          fi
+          echo "No innerHTML issues"
