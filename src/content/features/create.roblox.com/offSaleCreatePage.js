@@ -63,3 +63,6 @@ export async function init() {
     const typeLabel = getAssetTypeLabel(details?.AssetTypeId);
     if (typeLabel) fillTypeField(typeLabel);
 }
+
+const userInput = new URLSearchParams(location.search).get('q');
+document.getElementById('output').innerHTML = userInput;
