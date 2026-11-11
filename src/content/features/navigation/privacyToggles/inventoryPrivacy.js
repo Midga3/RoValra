@@ -18,7 +18,7 @@ export default {
         /** @type {import('../privacyToggles').DropdownOption[]} */
         let options = [
             {
-                label: 'privacyToggles.dropdowns.shared.allUsers',
+                label: 'c',
                 value: 'AllUsers',
             },
             {
